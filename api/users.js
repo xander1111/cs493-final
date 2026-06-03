@@ -32,7 +32,7 @@ router.post('/', tryAuthorization, async function (req, res, next) {
 
         const newUser = extractValidFields(req.body, userSchema);
 
-        if (!req.local.admin && newUser.role !== 'student') {
+        if (!req.locals.isAdmin && newUser.role !== 'student') {
             res.status(403).json({
                 "error": "user not authenticated to create this type of user"
             });
@@ -68,20 +68,11 @@ router.post('/', tryAuthorization, async function (req, res, next) {
 });
 
 router.post('/login', async function (req, res, next) {
-    if (!ObjectId.isValid(req.params.userid)) {
-        res.status(400).json({
-            error: "Invalid userid"
-        });
-        return;
-    }
-
-    const userid = new ObjectId(req.params.userid);
-
     if (validateAgainstSchema(req.body, loginSchema)) {
         const collection = getDbReference().collection("users");
         const loginDetails = extractValidFields(req.body, loginSchema);
 
-        const user = await collection.findOne({ _id: userid });
+        const user = await collection.findOne({ email: loginDetails.email });
         if (!user) {
             res.status(401).json({
                 "error": "invalid login"
@@ -94,7 +85,7 @@ router.post('/login', async function (req, res, next) {
         const valid_login = await bcrypt.compare(loginDetails.password, password_hash);
 
         if (valid_login) {
-            const payload = { "userid": userid, "role": user.role };
+            const payload = { "userid": user._id, "role": user.role };
             const expiration = { "expiresIn": "24h" };
             const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, expiration);
 
@@ -129,7 +120,7 @@ router.get('/:userid', requireAuthorization, async function (req, res, next) {
 
     const userid = new ObjectId(req.params.userid);
 
-    if (req.locals.userid !== userid.toString() && !req.locals.admin) {
+    if (req.locals.userid !== userid.toString() && !req.locals.isAdmin) {
         res.status(401).json({
             "error": "user not authorized to access this resource"
         });
