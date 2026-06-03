@@ -1,0 +1,36 @@
+services:
+  mongo-server:
+    image: mongo:7.0
+    env_file:
+      - example.env
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet \"mongodb://$$MONGO_INITDB_ROOT_USERNAME:$$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/admin?authSource=admin\" --eval \"db.adminCommand({ ping: 1 })\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+
+  mongo-init:
+    build: ./init 
+    env_file:
+      - example.env
+    environment:
+      MONGO_HOST: "mongo-server"
+      MONGO_ROOT_DB: "admin"
+    depends_on:
+      mongo-server:
+        condition: service_healthy
+
+  api-server:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - example.env
+    environment:
+      MONGO_HOST: "mongo-server"
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+
