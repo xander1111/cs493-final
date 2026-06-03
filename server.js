@@ -1,16 +1,29 @@
 const express = require('express');
 const morgan = require('morgan');
+const bcrypt = require('bcryptjs');
 
 const api = require('./api');
 
-const { MongoClient, ObjectId } = require('mongodb');
-const { connectToDb } = require('./lib/mongo');
+const { connectToDb, getDbReference } = require('./lib/mongo');
 
 const app = express();
 const port = process.env.PORT || 8000;
 
+async function seedAdmin() {
+    const email = process.env.ADMIN_EMAIL || 'admin@test.com';
+    const password = process.env.ADMIN_PASSWORD || 'adminpass';
 
-connectToDb(() => {
+    const users = getDbReference().collection('users');
+    const existing = await users.findOne({ email });
+    if (existing) return;
+
+    const hashed = await bcrypt.hash(password, 8);
+    await users.insertOne({ name: 'Admin', email, password: hashed, role: 'admin' });
+    console.log(`Seeded admin user: ${email}`);
+}
+
+connectToDb(async () => {
+    await seedAdmin();
     app.listen(port, () => {
         console.log(`Server is listening on port ${port}`);
     });

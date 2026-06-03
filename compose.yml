@@ -2,7 +2,7 @@ services:
   mongo-server:
     image: mongo:7.0
     env_file:
-      - example.env
+      - .env
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet \"mongodb://$$MONGO_INITDB_ROOT_USERNAME:$$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/admin?authSource=admin\" --eval \"db.adminCommand({ ping: 1 })\""]
       interval: 5s
@@ -14,7 +14,7 @@ services:
   mongo-init:
     build: ./init 
     env_file:
-      - example.env
+      - .env
     environment:
       MONGO_HOST: "mongo-server"
       MONGO_ROOT_DB: "admin"
@@ -26,8 +26,8 @@ services:
     build: .
     ports:
       - "8000:8000"
-    env_file:
-      - example.env
+    env_file:    
+      - .env
     environment:
       MONGO_HOST: "mongo-server"
     depends_on:
