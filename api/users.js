@@ -22,7 +22,6 @@ const loginSchema = {
     password: { required: true },
 }
 
-
 /*
  * Route to create a new user account
  */
@@ -107,10 +106,6 @@ router.post('/login', async function (req, res, next) {
 });
 
 router.get('/:userid', requireAuthorization, async function (req, res, next) {
-    // TODO This function should also send back:
-    // For students: A list of courses the user is enrolled in
-    // For instructors: A list of courses the user is the instructor of
-
     if (!ObjectId.isValid(req.params.userid)) {
         res.status(400).json({
             error: "Invalid userid"
@@ -128,15 +123,28 @@ router.get('/:userid', requireAuthorization, async function (req, res, next) {
     }
 
     const collection = getDbReference().collection("users");
+    const coursesCollection = getDbReference().collection("courses");
 
     const user = await collection.findOne({ _id: userid });
     if (user) {
-        res.status(200).json({
+        let courses = [];
+	if (user.role === "student") {
+	    courses = await coursesCollection
+	        .find({ students: userid })
+		.project({ _id: 1 })
+		.toArray();
+	} else {
+	    courses = await coursesCollection
+		.find({ instructorId: userId })
+		.project({ _id: 1 })
+		.toArray();
+        }
+	res.status(200).json({
             _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
-	    courses: user.courses
+	    courses: courses.map(c => c._id);
         });
     } else {
         next();
