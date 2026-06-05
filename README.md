@@ -20,6 +20,8 @@
 
 `docker compose up` - Starts all the docker containers.
 
+`sh test.sh` - Runs test script.
+
 ## Troubleshooting
 
 `docker compose down -v` - Shuts down all docker containers.
