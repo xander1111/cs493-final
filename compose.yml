@@ -22,15 +22,27 @@ services:
       mongo-server:
         condition: service_healthy
 
+  redis-server:
+    image: redis:7.2
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
   api-server:
     build: .
     ports:
       - "8000:8000"
-    env_file:    
+    env_file:
       - .env
     environment:
       MONGO_HOST: "mongo-server"
+      REDIS_HOST: "redis-server"
     depends_on:
       mongo-init:
         condition: service_completed_successfully
+      redis-server:
+        condition: service_healthy
 
