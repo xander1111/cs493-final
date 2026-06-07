@@ -1,6 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
+const { redisClient, rateLimit } = require('./lib/rateLimit')
 
 const api = require('./api');
 
@@ -24,6 +25,8 @@ async function seedAdmin() {
 
 connectToDb(async () => {
     await seedAdmin();
+    await redisClient.connect();
+
     app.listen(port, () => {
         console.log(`Server is listening on port ${port}`);
     });
@@ -43,6 +46,7 @@ app.use(express.static('public'));
  * top-level router lives in api/index.js.  That's what we include here, and
  * it provides all of the routes.
  */
+app.use(rateLimit);
 app.use('/', api);
 
 app.use(function (req, res, next) {

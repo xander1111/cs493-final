@@ -23,6 +23,13 @@ req() {
     local response; response=$(curl -s -w '\n%{http_code}' "$@")
     local body; body=$(echo "$response" | head -n -1)
     local status; status=$(echo "$response" | tail -n1)
+    if [ "$status" = "429" ] && [ "$expected" != "429" ]; then
+        echo -e "${yellow}Rate limited — waiting 60s before retrying...${nc}" >&2
+        sleep 60
+        response=$(curl -s -w '\n%{http_code}' "$@")
+        body=$(echo "$response" | head -n -1)
+        status=$(echo "$response" | tail -n1)
+    fi
     if [ "$status" = "$expected" ]; then
         pass "[$status] $desc"
     else
@@ -258,6 +265,34 @@ req "Admin can delete course" 204 \
 
 req "Deleted assignment is gone" 404 \
     "$BASE/assignments/$ASSIGNMENT_ID" > /dev/null
+
+# ─── Rate Limiting ────────────────────────────────────────────────────────────
+header "Rate Limiting"
+
+# Exhaust the bucket (10 requests allowed per minute)
+GOT_429=false
+for i in $(seq 1 15); do
+    status=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/courses")
+    if [ "$status" = "429" ]; then
+        GOT_429=true
+        break
+    fi
+done
+
+if $GOT_429; then
+    pass "Rate limit enforced (429 received after burst)"
+else
+    fail "Rate limit not enforced (no 429 after 15 requests)"
+fi
+
+# Wait for bucket to partially refill (6s ~ 1 token at 10/60s rate)
+sleep 7
+status=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/courses")
+if [ "$status" = "200" ]; then
+    pass "Rate limit recovers after partial refill"
+else
+    fail "Rate limit did not recover after partial refill [$status]"
+fi
 
 # ─── Summary ──────────────────────────────────────────────────────────────────
 echo "" >&2
