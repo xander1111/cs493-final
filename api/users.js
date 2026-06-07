@@ -144,7 +144,7 @@ router.get('/:userid', requireAuthorization, async function (req, res, next) {
             name: user.name,
             email: user.email,
             role: user.role,
-	    courses: courses.map(c => c._id);
+	    courses: courses.map(c => c._id)
         });
     } else {
         next();
