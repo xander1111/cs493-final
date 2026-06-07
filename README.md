@@ -10,7 +10,7 @@
 
 `NodeJS` - https://nodejs.org/en
 
-`.env` - Environment file with mongoDB access credentials and JWT_SECRET_KEY.
+`.env` - Environment file with mongoDB access credentials.
 
 ## Installing Dependencies
 
