@@ -2,7 +2,7 @@
 
 ### The Team
 
-`Xander Bailey, Curtis Kauer, Austin Turbyne, Colin Mant`
+`Xander Bailey, Curtis Kauer, Austen Turbyne, Colin Mant`
 
 ## Requirements 
 
