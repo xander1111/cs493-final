@@ -135,7 +135,7 @@ router.get('/:userid', requireAuthorization, async function (req, res, next) {
 		.toArray();
 	} else {
 	    courses = await coursesCollection
-		.find({ instructorId: userId })
+		.find({ instructorid: userid })
 		.project({ _id: 1 })
 		.toArray();
         }
